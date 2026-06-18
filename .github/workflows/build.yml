@@ -9,21 +9,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
+
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
+
       - name: Build TWA APK
         run: |
           mkdir twa && cd twa
           keytool -genkey -v -keystore android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android123 -keypass android123 -dname "CN=Amezclarte,O=Amezclarte,C=CL"
           echo '{"packageId":"com.amezclarte.app","host":"warm-bunny-1c316d.netlify.app","name":"Amezclarte","launcherName":"Amezclarte","display":"standalone","orientation":"portrait","themeColor":"#0a0a0a","backgroundColor":"#0a0a0a","startUrl":"/index.html","iconUrl":"https://warm-bunny-1c316d.netlify.app/icon-512.png","maskableIconUrl":"https://warm-bunny-1c316d.netlify.app/icon-maskable.png","appVersionCode":1,"appVersion":"1.0.0","signingKey":{"path":"./android.keystore","alias":"android"},"enableNotifications":false,"shortcuts":[],"isChromeOSOnly":false,"enableSiteSettingsShortcut":true,"fallbackType":"customtabs","features":{},"alphaDependencies":{"enabled":false},"generatorApp":"bubblewrap-cli","webManifestUrl":"https://warm-bunny-1c316d.netlify.app/manifest.json","minSdkVersion":19,"targetSdkVersion":34}' > twa.json
-          bubblewrap build --manifest ./twa.json
+          echo "n" | bubblewrap build --manifest ./twa.json
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
