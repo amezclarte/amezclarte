@@ -16,9 +16,6 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Clone and configure TWA
         run: |
           git clone https://github.com/GoogleChromeLabs/svgomg-twa.git twa
@@ -27,6 +24,7 @@ jobs:
           find . -type f \( -name "*.gradle" -o -name "*.xml" \) -exec sed -i 's/art.svgomg.twa/com.amezclarte.app/g' {} + 2>/dev/null || true
           find . -type f -name "*.xml" -exec sed -i 's|svgomg.firebaseapp.com|warm-bunny-1c316d.netlify.app|g' {} + 2>/dev/null || true
           find . -type f -name "*.xml" -exec sed -i 's|https://svgomg.firebaseapp.com|https://warm-bunny-1c316d.netlify.app|g' {} + 2>/dev/null || true
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
 
       - name: Generate keystore
         run: keytool -genkey -v -keystore amezclarte.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android123 -keypass android123 -dname "CN=Amezclarte,O=Amezclarte,C=CL"
