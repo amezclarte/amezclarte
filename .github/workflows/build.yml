@@ -26,26 +26,35 @@ jobs:
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Configure Bubblewrap
+      - name: Configure Bubblewrap JDK and SDK
         run: |
           mkdir -p ~/.bubblewrap
-          cat > ~/.bubblewrap/config.json << BWEOF
-          {
-            "jdkPath": "$JAVA_HOME",
-            "androidSdkPath": "$ANDROID_HOME"
-          }
-          BWEOF
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$ANDROID_HOME" > ~/.bubblewrap/config.json
+          cat ~/.bubblewrap/config.json
 
-      - name: Build TWA APK
+      - name: Init TWA project
         run: |
           mkdir twa && cd twa
           keytool -genkey -v -keystore android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android123 -keypass android123 -dname "CN=Amezclarte,O=Amezclarte,C=CL"
-          echo '{"packageId":"com.amezclarte.app","host":"warm-bunny-1c316d.netlify.app","name":"Amezclarte","launcherName":"Amezclarte","display":"standalone","orientation":"portrait","themeColor":"#0a0a0a","backgroundColor":"#0a0a0a","startUrl":"/index.html","iconUrl":"https://warm-bunny-1c316d.netlify.app/icon-512.png","maskableIconUrl":"https://warm-bunny-1c316d.netlify.app/icon-maskable.png","appVersionCode":1,"appVersion":"1.0.0","signingKey":{"path":"./android.keystore","alias":"android"},"enableNotifications":false,"shortcuts":[],"isChromeOSOnly":false,"enableSiteSettingsShortcut":true,"fallbackType":"customtabs","features":{},"alphaDependencies":{"enabled":false},"generatorApp":"bubblewrap-cli","webManifestUrl":"https://warm-bunny-1c316d.netlify.app/manifest.json","minSdkVersion":19,"targetSdkVersion":34}' > twa.json
-          bubblewrap build --manifest ./twa.json
+          bubblewrap init --manifest https://warm-bunny-1c316d.netlify.app/manifest.json --directory . \
+            --packageId com.amezclarte.app \
+            --name Amezclarte \
+            --themeColor "#0a0a0a" \
+            --backgroundColor "#0a0a0a" \
+            --startUrl "/index.html" \
+            --iconUrl "https://warm-bunny-1c316d.netlify.app/icon-512.png" \
+            --maskableIconUrl "https://warm-bunny-1c316d.netlify.app/icon-maskable.png" \
+            --signingKeyPath ./android.keystore \
+            --signingKeyAlias android
+
+      - name: Build APK with Gradle
+        working-directory: twa
+        run: |
+          ./gradlew assembleRelease -Pandroid.injected.signing.store.file=android.keystore -Pandroid.injected.signing.store.password=android123 -Pandroid.injected.signing.key.alias=android -Pandroid.injected.signing.key.password=android123
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: amezclarte-apk
-          path: twa/app-release-signed.apk
+          path: twa/app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
