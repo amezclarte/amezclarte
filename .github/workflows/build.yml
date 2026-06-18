@@ -20,18 +20,21 @@ jobs:
         with:
           node-version: 18
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Configure Bubblewrap JDK
+      - name: Configure Bubblewrap
         run: |
           mkdir -p ~/.bubblewrap
-          cat > ~/.bubblewrap/config.json << EOF
+          cat > ~/.bubblewrap/config.json << BWEOF
           {
             "jdkPath": "$JAVA_HOME",
-            "androidSdkPath": ""
+            "androidSdkPath": "$ANDROID_HOME"
           }
-          EOF
+          BWEOF
 
       - name: Build TWA APK
         run: |
