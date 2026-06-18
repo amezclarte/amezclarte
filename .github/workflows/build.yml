@@ -16,41 +16,24 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
-
-      - name: Configure Bubblewrap JDK and SDK
+      - name: Clone and configure TWA
         run: |
-          mkdir -p ~/.bubblewrap
-          printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$ANDROID_HOME" > ~/.bubblewrap/config.json
-          cat ~/.bubblewrap/config.json
+          git clone https://github.com/GoogleChromeLabs/svgomg-twa.git twa
+          cd twa
+          find . -type f \( -name "*.gradle" -o -name "*.xml" -o -name "*.java" -o -name "*.kt" \) -exec sed -i 's/art\.svgomg\.twa/com.amezclarte.app/g' {} + 2>/dev/null || true
+          find . -type f \( -name "*.gradle" -o -name "*.xml" \) -exec sed -i 's/art.svgomg.twa/com.amezclarte.app/g' {} + 2>/dev/null || true
+          find . -type f -name "*.xml" -exec sed -i 's|svgomg.firebaseapp.com|warm-bunny-1c316d.netlify.app|g' {} + 2>/dev/null || true
+          find . -type f -name "*.xml" -exec sed -i 's|https://svgomg.firebaseapp.com|https://warm-bunny-1c316d.netlify.app|g' {} + 2>/dev/null || true
 
-      - name: Init TWA project
-        run: |
-          mkdir twa && cd twa
-          keytool -genkey -v -keystore android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android123 -keypass android123 -dname "CN=Amezclarte,O=Amezclarte,C=CL"
-          bubblewrap init --manifest https://warm-bunny-1c316d.netlify.app/manifest.json --directory . \
-            --packageId com.amezclarte.app \
-            --name Amezclarte \
-            --themeColor "#0a0a0a" \
-            --backgroundColor "#0a0a0a" \
-            --startUrl "/index.html" \
-            --iconUrl "https://warm-bunny-1c316d.netlify.app/icon-512.png" \
-            --maskableIconUrl "https://warm-bunny-1c316d.netlify.app/icon-maskable.png" \
-            --signingKeyPath ./android.keystore \
-            --signingKeyAlias android
+      - name: Generate keystore
+        run: keytool -genkey -v -keystore amezclarte.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android123 -keypass android123 -dname "CN=Amezclarte,O=Amezclarte,C=CL"
 
-      - name: Build APK with Gradle
+      - name: Build APK
         working-directory: twa
-        run: |
-          ./gradlew assembleRelease -Pandroid.injected.signing.store.file=android.keystore -Pandroid.injected.signing.store.password=android123 -Pandroid.injected.signing.key.alias=android -Pandroid.injected.signing.key.password=android123
+        run: ./gradlew assembleRelease -Pandroid.injected.signing.store.file=../amezclarte.keystore -Pandroid.injected.signing.store.password=android123 -Pandroid.injected.signing.key.alias=android -Pandroid.injected.signing.key.password=android123
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
