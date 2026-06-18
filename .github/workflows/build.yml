@@ -20,10 +20,12 @@ jobs:
         run: |
           git clone https://github.com/GoogleChromeLabs/svgomg-twa.git twa
           cd twa
+          # Update Gradle to version that supports Java 11
+          ./gradlew wrapper --gradle-version 7.4 --distribution-type all
+          # Replace package and domain
           find . -type f \( -name "*.gradle" -o -name "*.xml" -o -name "*.java" -o -name "*.kt" \) -exec sed -i 's/art\.svgomg\.twa/com.amezclarte.app/g' {} + 2>/dev/null || true
           find . -type f \( -name "*.gradle" -o -name "*.xml" \) -exec sed -i 's/art.svgomg.twa/com.amezclarte.app/g' {} + 2>/dev/null || true
           find . -type f -name "*.xml" -exec sed -i 's|svgomg.firebaseapp.com|warm-bunny-1c316d.netlify.app|g' {} + 2>/dev/null || true
-          find . -type f -name "*.xml" -exec sed -i 's|https://svgomg.firebaseapp.com|https://warm-bunny-1c316d.netlify.app|g' {} + 2>/dev/null || true
           echo "sdk.dir=$ANDROID_HOME" > local.properties
 
       - name: Generate keystore
